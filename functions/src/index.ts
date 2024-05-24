@@ -17,3 +17,17 @@
 //   logger.info("Hello logs!", {structuredData: true});
 //   response.send("Hello from Firebase!");
 // });
+
+import * as functions from 'firebase-functions';
+import * as admin from 'firebase-admin';
+import { updateLeaderboardOnScoreSubmission } from './updateLeaderboardOnScoreSubmission';
+import { updateLeaderboardOnUsernameUpdate } from './updateLeaderboardOnUsernameUpdate';
+
+admin.initializeApp();
+
+export const myFunction = functions.https.onRequest((request, response) => {
+    response.send("Hello from Firebase!");
+});
+
+export { updateLeaderboardOnScoreSubmission };
+export { updateLeaderboardOnUsernameUpdate };
