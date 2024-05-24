@@ -1,40 +1,48 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
+const { log } = require("firebase-functions/logger");
+
 /**
  * Cloud Function to Update Username on Leaderboard Entries.
- *
- * This function triggers on updates to the `users/{userId}` document path in Firestore.
- * It checks if the `username` field in the document has changed. If it has, the function
- * updates all corresponding leaderboard entries with the new username across all game IDs.
- *
- * The function uses a Firestore collection group query to find all relevant leaderboard entries
- * for the user across various games. If the username has changed, it performs a batch update
- * to set the new username in each leaderboard entry.
- *
- * The update is designed to ensure data consistency across user profiles and leaderboard entries,
- * which can affect multiple documents. It uses batch operations to minimize the number of write
- * operations and ensure atomicity.
- *
- * Usage:
- * - This function is automatically invoked by Firestore when any update occurs to a user's document.
- * - It is part of the backend operations and does not require direct invocation from client applications.
- *
- * @module cloud-functions
- * @function updateLeaderboardOnUsernameUpdate
- * @param {functions.Change<functions.firestore.DocumentSnapshot>} change - Contains the before and after states of the document that triggered the function.
- * @param {functions.EventContext} context - Contains metadata about the event, including the `userId` of the document that triggered the function.
- * @returns {Promise<void>} A promise that resolves when all updates are successfully committed, or throws an error if the operation fails.
- *
- * @throws {functions.https.HttpsError} Throws an 'unknown' error if the batch update fails.
+ * 
+ * This Cloud Function is triggered whenever a document in the "users" collection is updated.
+ * Specifically, it monitors changes to the username field of the user document. If the username
+ * is changed, this function updates the corresponding entry in the "leaderboards" collection to
+ * reflect the new username. This ensures that the leaderboard always displays the current username
+ * of each user.
+ * 
+ * @param {functions.Change<functions.firestore.DocumentSnapshot>} change - Object representing the state of the document before and after the update.
+ * @param {functions.EventContext} context - Object containing metadata about the event.
+ * 
+ * @returns {Promise<null>} - A promise that resolves to null.
+ * 
+ * The function performs the following steps:
+ * 1. Extracts the user data before and after the update from the `change` object.
+ * 2. Logs the user ID and the new username.
+ * 3. Checks if the username has changed; if not, it logs a message and exits.
+ * 4. If the username has changed, it retrieves a reference to the user's entry in the "leaderboards" collection.
+ * 5. Executes a Firestore transaction to update the username in the leaderboard entry. If the entry does not exist, it logs a message.
+ * 6. Logs a success message if the transaction completes successfully.
+ * 7. Catches and logs any errors that occur during the transaction.
+ * 
+ * This function is essential for maintaining consistency between the user data and the leaderboard
+ * data in a Firestore database.
  */
 export const updateLeaderboardOnUsernameUpdate = functions.firestore
     .document("/users/{userId}")
     .onUpdate(async (change, context) => {
         const beforeData = change.before.data();
         const afterData = change.after.data();
-
         const { userId } = context.params;
+
+        // Ensure data exists
+        if (!beforeData || !afterData) {
+            log("No data found in the document.");
+            return null;
+        }
+
+        log('Updating user:', userId, 'with username:', afterData.username);
 
         // Check if the username has changed
         if (beforeData.username === afterData.username) {
@@ -42,62 +50,27 @@ export const updateLeaderboardOnUsernameUpdate = functions.firestore
             return null;
         }
 
-        try {
-            const leaderboardRef = admin.firestore()
+        const leaderboardRef = admin.firestore()
             .collection("leaderboards")
             .doc("bingo")
             .collection("userScores")
             .doc(userId);
 
-
+        try {
             await admin.firestore().runTransaction(async (transaction) => {
+                const doc = await transaction.get(leaderboardRef);
+                if (!doc.exists) {
+                    log(`No leaderboard entry found for user: ${userId}`);
+                }
+
                 transaction.set(leaderboardRef, {
                     username: afterData.username
                 }, { merge: true });
             });
+            log(`Username updated successfully for user: ${userId}`);
             return null;
-        } catch(error) {
-            error('error', error);
+        } catch (error) {
+            log('Error updating username on leaderboard:', error);
             return null;
         }
-        // TRY 2
-        // const leaderboardsRef = admin.firestore().collection('leaderboards');
-  
-        // try {
-        //   const leaderboardsSnapshot = await leaderboardsRef.get();
-      
-        //   if (leaderboardsSnapshot.empty) {
-        //     log('No leaderboards found.');
-        //     return null;
-        //   }
-      
-        //   const batch = admin.firestore().batch();
-        //   log("🚀 ~ batch:", batch);
-      
-        //   leaderboardsSnapshot.forEach(async (leaderboardDoc) => {
-        //     const userScoresRef = leaderboardDoc.ref.collection('userScores');
-        //     log("🚀 ~ leaderboardsSnapshot.forEach ~ userScoresRef:", userScoresRef)
-        //     const userScoresSnapshot = await userScoresRef.where('userId', '==', userId).get();
-        //     log("🚀 ~ leaderboardsSnapshot.forEach ~ userScoresSnapshot:", userScoresSnapshot);
-      
-        //     if (!userScoresSnapshot.empty) {
-        //         console.debug('Attempting to batch update leaderboards found.');
-        //         log('Attempting to batch update leaderboards found.');
-        //         userScoresSnapshot.forEach((userScoreDoc) => {
-        //           console.debug('Here is a userScoreDoc',userScoreDoc.data());
-        //           log('Here is a userScoreDoc',userScoreDoc.data());
-        //         batch.update(userScoreDoc.ref, { username: afterData.username });
-        //       });
-        //     }
-        //   });
-      
-        //   const result = await batch.commit();
-        //   log("🚀 ~ result:", result);
-        //   log('Usernames updated successfully in leaderboards.');
-        //   return null;
-          
-        // } catch (error) {
-        //     console.error(error as any);
-        //     throw new functions.https.HttpsError('unknown', `Failed to update leaderboard entries. ${userId}`, error);
-        // }
     });
