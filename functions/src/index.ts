@@ -19,11 +19,15 @@
 // });
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
-import { updateLeaderboardOnScoreSubmission } from './updateLeaderboardOnScoreSubmission';
-import { updateLeaderboardOnUsernameUpdate } from './updateLeaderboardOnUsernameUpdate';
+import * as admin from 'firebase-admin'
 
 admin.initializeApp();
+
+import { updateLeaderboardOnScoreSubmission } from './updateLeaderboardOnScoreSubmission';
+import { updateLeaderboardOnUsernameUpdate } from './updateLeaderboardOnUsernameUpdate';
+import { generateRandomUsername } from './generateRandomUserName';
+
+
 
 export const myFunction = functions.https.onRequest((request, response) => {
     response.send("Hello from Firebase!");
@@ -31,3 +35,4 @@ export const myFunction = functions.https.onRequest((request, response) => {
 
 export { updateLeaderboardOnScoreSubmission };
 export { updateLeaderboardOnUsernameUpdate };
+export { generateRandomUsername }
