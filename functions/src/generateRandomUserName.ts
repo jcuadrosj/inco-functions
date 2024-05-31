@@ -2,11 +2,11 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as log from 'firebase-functions/logger';
 const cors = require('cors')({ origin: true })
-import * as express from 'express'
+import * as express from 'express';
 
-const app = express()
+const app = express();
 
-app.use(cors)
+app.use(cors);
 
 const db = admin.firestore();
 
@@ -29,7 +29,7 @@ async function getRandomTerm(docId: string): Promise<string> {
         const randomTerm = terms[Math.floor(Math.random() * terms.length)];
         return randomTerm;
     } catch (error) {
-        log.error(`Error getting username from ${docId}: ${error}`)
+        log.error(`Error getting username from ${docId}: ${error}`);
         return ""
     }
 }
@@ -37,13 +37,21 @@ async function getRandomTerm(docId: string): Promise<string> {
 export const generateRandomUsername = functions.https.onRequest(async (req, res) => {
     cors(req, res,async() => {
         try {
-            const pride = await getRandomTerm('pride');
-            const tech = await getRandomTerm('tech');
-            const animal = await getRandomTerm('animal');
-            const randomDigits = Math.floor(100 + Math.random() * 900); // Three-digit random number
-            const username = `${pride}${tech}${animal}${randomDigits}`;
-            log.log(username);
-            res.status(200).send({ 'data': username});
+            let unique = false;
+            let username = "";
+            do {
+                let pride = await getRandomTerm('pride');
+                let tech = await getRandomTerm('tech');
+                let animal = await getRandomTerm('animal');
+                let randomDigits = Math.floor(100 + Math.random() * 900); // Three-digit random number
+                username = `${pride}${tech}${animal}${randomDigits}`;
+                let usernameQuery = await db.collection('users')
+                                                .where('username', '==', username)
+                                                .get();
+                unique = usernameQuery.empty;
+            } while (!unique);
+            log.log(username)
+            res.status(200).send({ data: username});
         } catch (error) {
             log.error('Error generating username:', error);
             res.status(500).send({ 'data': 'Internal Server Error'});

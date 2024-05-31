@@ -26,6 +26,8 @@ admin.initializeApp();
 import { updateLeaderboardOnScoreSubmission } from './updateLeaderboardOnScoreSubmission';
 import { updateLeaderboardOnUsernameUpdate } from './updateLeaderboardOnUsernameUpdate';
 import { generateRandomUsername } from './generateRandomUserName';
+import { generateUserDocument } from './createUserOnAuthentication';
+import { updateUsername } from './updateUsernameWithUniqueness';
 
 
 
@@ -33,6 +35,8 @@ export const myFunction = functions.https.onRequest((request, response) => {
     response.send("Hello from Firebase!");
 });
 
+export { generateUserDocument };
 export { updateLeaderboardOnScoreSubmission };
 export { updateLeaderboardOnUsernameUpdate };
-export { generateRandomUsername }
+export { generateRandomUsername };
+export { updateUsername };
