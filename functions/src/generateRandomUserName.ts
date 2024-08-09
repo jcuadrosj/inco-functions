@@ -39,19 +39,22 @@ export const generateRandomUsername = functions.https.onRequest(async (req, res)
         try {
             let unique = false;
             let username = "";
+            let pride = await getRandomTerm('pride');
+            let tech = await getRandomTerm('tech');
+            let animal = await getRandomTerm('animal');
+            let randomDigits = Math.ceil(Math.random() * 9999); // Three-digit random number
+            
             do {
-                let pride = await getRandomTerm('pride');
-                let tech = await getRandomTerm('tech');
-                let animal = await getRandomTerm('animal');
-                let randomDigits = Math.floor(100 + Math.random() * 900); // Three-digit random number
                 username = `${pride}${tech}${animal}${randomDigits}`;
+                
                 let usernameQuery = await db.collection('users')
-                                                .where('username', '==', username)
-                                                .get();
+                                            .where('username', '==', username)
+                                            .limit(1)
+                                            .get();
                 unique = usernameQuery.empty;
+                randomDigits += 1;
             } while (!unique);
-            log.log(username)
-            res.status(200).send({ data: username});
+            res.status(200).send({ username: username});
         } catch (error) {
             log.error('Error generating username:', error);
             res.status(500).send({ 'data': 'Internal Server Error'});
