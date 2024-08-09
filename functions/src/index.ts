@@ -18,8 +18,7 @@
 //   response.send("Hello from Firebase!");
 // });
 
-import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin'
+import * as admin from 'firebase-admin';
 
 admin.initializeApp();
 
@@ -30,13 +29,8 @@ import { generateUserDocument } from './createUserOnAuthentication';
 import { updateUsername } from './updateUsernameWithUniqueness';
 
 
-
-export const myFunction = functions.https.onRequest((request, response) => {
-    response.send("Hello from Firebase!");
-});
-
-export { generateUserDocument };
 export { updateLeaderboardOnScoreSubmission };
 export { updateLeaderboardOnUsernameUpdate };
 export { generateRandomUsername };
+export { generateUserDocument };
 export { updateUsername };

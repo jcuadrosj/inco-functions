@@ -54,7 +54,7 @@ export const generateRandomUsername = functions.https.onRequest(async (req, res)
                 unique = usernameQuery.empty;
                 randomDigits += 1;
             } while (!unique);
-            res.status(200).send({ username: username});
+            res.status(200).send({ data: username});
         } catch (error) {
             log.error('Error generating username:', error);
             res.status(500).send({ 'data': 'Internal Server Error'});

@@ -1,5 +1,12 @@
 {
   "projects": {
     "default": "inco-games"
-  }
+  },
+  "targets": {},
+  "etags": {
+    "inco-games": {
+      "extensionInstances": {}
+    }
+  },
+  "dataconnectEmulatorConfig": {}
 }
