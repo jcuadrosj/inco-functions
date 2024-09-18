@@ -1,5 +1,11 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+const cors = require('cors')({ origin: true })
+import * as express from 'express';
+
+const app = express();
+
+app.use(cors);
 
 const { log } = require("firebase-functions/logger");
 
@@ -35,7 +41,7 @@ export const updateLeaderboardOnUsernameUpdate = functions.firestore
         const beforeData = change.before.data();
         const afterData = change.after.data();
         const { userId } = context.params;
-
+        
         // Ensure data exists
         if (!beforeData || !afterData) {
             log("No data found in the document.");
@@ -45,6 +51,10 @@ export const updateLeaderboardOnUsernameUpdate = functions.firestore
         log('Updating user:', userId, 'with username:', afterData.username);
 
         // Check if the username has changed
+        // if ( (beforeData.username === afterData.username) && (beforeData.linkedInURL === afterData.linkedInURL)) {
+        //     log("Username and profile URL have not changed, no update needed.");
+        //     return null;
+        // }
         if (beforeData.username === afterData.username) {
             log("Username has not changed, no update needed.");
             return null;
@@ -64,13 +74,14 @@ export const updateLeaderboardOnUsernameUpdate = functions.firestore
                 }
 
                 transaction.set(leaderboardRef, {
-                    username: afterData.username
+                    username: afterData.username,
+                    // linkedInURL: afterData.linkedInURL
                 }, { merge: true });
             });
-            log(`Username updated successfully for user: ${userId}`);
+            log(`Leaderboard updated successfully for user: ${userId}`);
             return null;
         } catch (error) {
-            log('Error updating username on leaderboard:', error);
+            log('Error updating leaderboard for user ${userId}:', error);
             return null;
         }
     });

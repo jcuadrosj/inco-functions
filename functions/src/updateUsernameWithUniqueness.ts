@@ -1,6 +1,11 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+const cors = require('cors')({ origin: true })
+import * as express from 'express';
 
+const app = express();
+
+app.use(cors);
 const db = admin.firestore();
 
 // The main function to update the username
