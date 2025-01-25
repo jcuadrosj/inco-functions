@@ -32,10 +32,10 @@ export const updateLeaderboardOnScoreSubmission = functions.firestore
                 // TODO: We need to figure out how to update users table to 
                 // add gameId to gamesPlayed field.
 
-            await admin.firestore().runTransaction(async (transaction) => {
+            await admin.firestore().runTransaction(async (transaction:any) => {
                 const lbDoc = await transaction.get(leaderboardRef);
-                const existingData = lbDoc.data();
-                const newTotalScore = lbDoc.exists && existingData ? existingData.totalScore + score : score;
+                const existingScore = lbDoc.data().totalScore;
+                const newTotalScore = lbDoc.exists && (typeof existingScore === 'number') && !isNaN(existingScore) ? existingScore + score : score;
 
                 transaction.set(leaderboardRef, {
                     totalScore: newTotalScore,
