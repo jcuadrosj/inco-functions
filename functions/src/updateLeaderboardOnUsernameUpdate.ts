@@ -2,6 +2,8 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 const cors = require('cors')({ origin: true })
 import * as express from 'express';
+import { GAME_NAME } from "./firebase/firebase-constants";
+
 
 const app = express();
 
@@ -62,7 +64,7 @@ export const updateLeaderboardOnUsernameUpdate = functions.firestore
 
         const leaderboardRef = admin.firestore()
             .collection("leaderboards")
-            .doc("bingo")
+            .doc(GAME_NAME)
             .collection("userScores")
             .doc(userId);
 
